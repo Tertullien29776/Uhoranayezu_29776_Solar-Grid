@@ -1,1 +1,8 @@
+1. Structural Overview of the Diagram
+The diagram consists of two main pools (with the second pool divided into two lanes), connected by sequence flows (solid arrows, showing order of work within a lane/pool) and message flows (dashed arrows, showing communication or data exchange between pools):
 
+Top Pool (1 Lane): Represents the primary operational/user-facing or monitoring workflow. It starts with a Start Event, moves through sequential tasks, splits at an Exclusive Gateway (X) into three alternative/branching paths, merges back at an X gateway, continues through further tasks and message exchanges, and finishes at an End Event.
+
+Middle Pool — Upper Lane: Receives initial and follow-up messages from the top pool, makes decisions at two X gateways, sends a message back up to the top pool, routes one branch into the lower lane, and merges into a final task that sends a message up to the top pool.
+
+Middle Pool — Lower Lane: Handles a three-step sub-process triggered from the upper lane's lower branch and feeds its output back up into the upper lane's final task.
