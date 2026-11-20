@@ -195,3 +195,35 @@ Conceptual Data Modeling (Entity-Relationship Diagram / ERD).
 Logical Database Schema Normalization (3NF).
 
 PL/SQL Stored Procedures, Functions, and Triggers in subsequent course phases.
+
+
+# Off-Grid Solar Micro-Grid Energy Billing & Battery Health Monitor
+
+**Student:** Uhoranayezu Tertullien  
+**Student ID:** 29776  
+**Course:** INSY 8311 & Database Development with PL/SQL  
+**Instructor:** Eric Maniraguha  
+
+---
+
+## Phase II — Data Sourcing, Normalization and Logical Design
+
+### Overview
+This phase organizes raw solar micro-grid telemetry and billing data into normalized relational tables in **Third Normal Form (3NF)** as the blueprint for Oracle implementation in Phase IV.
+
+### Repository Structure for Phase II
+* `data/raw/` — Unmodified raw dataset ($\ge 500$ records, with personal data anonymised)
+* `data/dataset_card.md` — Dataset metadata (source link, licence, format, size, collection date, record meaning) and raw data quality counts
+* `docs/design/normalization.md` — Step-by-step normalization from UNF to 1NF, 2NF, and 3NF with sample rows, dependency removal notes, field-to-table mappings, and Phase IV type-conversion/cleaning checklist
+* `docs/design/erd.png` — Crow's-foot logical Entity-Relationship Diagram showing entities, primary/foreign keys, relationships, cardinality, and optionality
+* `docs/design/data_dictionary.md` — Column definitions, meanings, and required/unique constraints (without Oracle data types or sizes)
+
+### Planned 3NF Entities
+* `CUSTOMERS` — Anonymised customer profiles and account metadata
+* `METERS` — Smart meter identifiers, micro-grid zone assignment, and connection status
+* `PREPAID_ACCOUNTS` — Prepaid balances, tariff rates, and cumulative energy usage
+* `ENERGY_TRANSACTIONS` — Top-up and billing transaction history
+* `CONSUMPTION_LOGS` — Interval energy consumption readings
+* `BATTERY_BANKS` — Micro-grid battery bank specifications and installation details
+* `BATTERY_HEALTH_LOGS` — Periodic battery telemetry (voltage, current, temperature, State of Charge, Depth of Discharge, State of Health)
+* `MAINTENANCE_ALERTS` — Alerts for zero/low credit, meter disconnections, and battery health issues
