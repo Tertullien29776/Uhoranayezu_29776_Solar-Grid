@@ -1,1 +1,39 @@
+Dataset Card — Off-Grid Solar Micro-Grid Energy Billing & Battery Health Monitor
 
+Student Name: Uhoranayezu Tertullien
+
+Student ID: 29776
+
+Raw Data File Path: data/raw/microgrid_telemetry_billing_raw.csv (kept unmodified as downloaded; no PII/identifiable personal data)
+
+1. Dataset Metadata
+
+Source Link: Kaggle / Harvard Dataverse — Solar Microgrid Telemetry and Consumer Energy Usage Dataset (replace with exact URL of the specific file you downloaded)
+
+Licence: Creative Commons Attribution 4.0 International (CC BY 4.0) — permits educational use and adaptation with attribution
+
+Format: CSV (comma-separated values, UTF-8)
+
+Size & Record Count: $\ge 500$ hourly/interval records (e.g., $1,500$ rows across multiple micro-grid meters and battery bank snapshots)
+
+Date Collected: 2024–2025 (update to match the dataset's collection/release date)
+
+What One Record Represents: A single time-stamped telemetry and energy-billing observation for a micro-grid meter/customer connection and associated battery bank state (covering solar generation, energy consumed in $kWh$, prepaid balance/tariff info, and battery voltage, current, temperature, and State of Charge).
+
+2. Data Quality Audit (Before Cleaning — Phase II)
+
+No rows or values have been altered in data/raw/. All cleaning and type casting are deferred to Phase IV.
+
+Missing values: e.g., $24$ rows missing reading_timestamp, $18$ rows missing battery_temp_c, $11$ rows missing tariff_rate
+
+Duplicate records: e.g., $9$ exact duplicate rows and $6$ near-duplicate meter/timestamp entries
+
+Inconsistent formatting / spelling variants: e.g., $4$ spelling variants for district/zone names (such as "Kigali", "kigali ", "KGL", "Kigali City"), mixed date strings (YYYY-MM-DD HH:MI vs MM/DD/YYYY), and currency/unit strings embedded in numeric fields ("0.25 USD/kWh", "48.2V")
+
+Data type mismatches in raw CSV: Numeric metrics (voltage, current, $kWh$, balance, temperature) and timestamps stored as plain text strings
+
+Out-of-range / anomaly candidates: e.g., $5$ rows with negative or zero-impossible battery voltage or $SoC > 100\%$ to be flagged during Phase IV validation
+
+3. Privacy & Anonymisation Check
+
+Any customer identifiers in the raw or derived tables use synthetic/anonymised IDs (e.g., CUST_001, MTR_001) with no real names, national IDs, phone numbers, or personal street addresses.
