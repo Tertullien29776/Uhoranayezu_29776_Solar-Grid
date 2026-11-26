@@ -107,4 +107,3 @@ BATTERY_BANKS (1) to BATTERY_HEALTH_LOGS (0..N): A battery bank records periodic
 
 BATTERY_BANKS (0..1) to MAINTENANCE_ALERTS (0..N) and METERS (0..1) to MAINTENANCE_ALERTS (0..N): Alerts may reference a battery bank, a meter, or both depending on the trigger.
 
-Save this content to docs/design/data_dictionary.md in your repository so it aligns with docs/design/normalization.md and docs/design/erd.png.
