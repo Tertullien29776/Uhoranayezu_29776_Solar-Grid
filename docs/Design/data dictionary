@@ -1,1 +1,110 @@
+Here is the Phase II logical data dictionary (docs/design/data_dictionary.md) for your Off-Grid Solar Micro-Grid Energy Billing & Battery Health Monitor project. In accordance with Phase II requirements, it lists each entity, key, relationship, column meaning, and required/unique status without Oracle data types or sizes.
 
+Data Dictionary — Phase II Logical Design
+Project: Off-Grid Solar Micro-Grid Energy Billing & Battery Health Monitor
+
+Course: INSY 8311 & Database Development with PL/SQL
+
+1. CUSTOMERS
+Stores anonymised micro-grid customer records.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+customer_id	Unique internal identifier for an anonymised customer	Yes	Yes	Primary Key
+customer_anon_code	External anonymised customer code from raw telemetry (e.g., CUST-1001)	Yes	Yes	Alternate Key
+microgrid_zone	Standardised micro-grid service zone or cluster name	Yes	No	Attribute
+account_status	Current customer status (e.g., active, suspended, inactive)	Yes	No	Attribute
+registered_date	Date the customer account was onboarded to the micro-grid	Yes	No	Attribute
+2. BATTERY_BANKS
+Stores micro-grid battery bank hardware and capacity metadata.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+bank_id	Unique internal identifier for a battery bank	Yes	Yes	Primary Key
+bank_code	External battery bank identifier from telemetry (e.g., BNK-10)	Yes	Yes	Alternate Key
+microgrid_zone	Standardised micro-grid zone where the battery bank is installed	Yes	No	Attribute
+nominal_capacity_kwh	Rated energy storage capacity of the battery bank	Yes	No	Attribute
+bank_status	Operational status of the battery bank (e.g., normal, warning, maintenance)	Yes	No	Attribute
+commissioned_date	Date the battery bank entered service	Yes	No	Attribute
+3. METERS
+Stores smart meter installations linked to customers and battery banks.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+meter_id	Unique internal identifier for a smart meter	Yes	Yes	Primary Key
+meter_code	External smart meter identifier from raw data (e.g., MTR-200)	Yes	Yes	Alternate Key
+customer_id	Customer to whom the smart meter is assigned	Yes	No	Foreign Key → CUSTOMERS.customer_id
+bank_id	Battery bank supplying energy to the meter's zone/feeder	Yes	No	Foreign Key → BATTERY_BANKS.bank_id
+meter_status	Current relay/connection state (e.g., active, disconnected)	Yes	No	Attribute
+installed_date	Date the meter was installed	Yes	No	Attribute
+4. PREPAID_ACCOUNTS
+Stores prepaid energy balance and tariff terms per customer or meter account.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+account_id	Unique identifier for a prepaid energy account	Yes	Yes	Primary Key
+customer_id	Owner of the prepaid account	Yes	No	Foreign Key → CUSTOMERS.customer_id
+meter_id	Smart meter associated with the prepaid balance	Yes	Yes	Foreign Key → METERS.meter_id
+current_balance	Current prepaid credit balance	Yes	No	Attribute
+tariff_rate	Applicable energy unit rate for billing calculations	Yes	No	Attribute
+last_updated_at	Timestamp when the balance or tariff was last updated	Yes	No	Attribute
+5. ENERGY_TRANSACTIONS
+Records prepaid credit top-ups and billing adjustments.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+transaction_id	Unique identifier for a billing or top-up transaction	Yes	Yes	Primary Key
+account_id	Prepaid account affected by the transaction	Yes	No	Foreign Key → PREPAID_ACCOUNTS.account_id
+meter_id	Smart meter associated with the transaction	Yes	No	Foreign Key → METERS.meter_id
+transaction_type	Category of transaction (e.g., top-up, energy deduction, adjustment)	Yes	No	Attribute
+amount	Monetary value of the transaction	Yes	No	Attribute
+balance_after	Resulting prepaid balance after the transaction is recorded	Yes	No	Attribute
+transaction_timestamp	Date and time when the transaction occurred	Yes	No	Attribute
+6. CONSUMPTION_LOGS
+Stores time-stamped energy usage readings captured from smart meters.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+consumption_id	Unique identifier for a consumption reading record	Yes	Yes	Primary Key
+meter_id	Smart meter that reported the energy consumption	Yes	No	Foreign Key → METERS.meter_id
+reading_timestamp	Date and time when the consumption reading was recorded	Yes	No	Attribute
+energy_consumed	Energy used during the interval	Yes	No	Attribute
+source_record_ref	Reference to the originating raw record identifier	No	No	Attribute
+7. BATTERY_HEALTH_LOGS
+Stores periodic electrical, thermal, and degradation telemetry for battery banks.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+health_log_id	Unique identifier for a battery telemetry snapshot	Yes	Yes	Primary Key
+bank_id	Battery bank measured by the telemetry reading	Yes	No	Foreign Key → BATTERY_BANKS.bank_id
+logged_timestamp	Date and time when telemetry was captured	Yes	No	Attribute
+voltage	Measured battery bank voltage	Yes	No	Attribute
+current	Measured charge/discharge current	Yes	No	Attribute
+temperature	Measured battery temperature	Yes	No	Attribute
+state_of_charge	State of Charge (SoC) percentage	Yes	No	Attribute
+depth_of_discharge	Depth of Discharge (DoD) percentage	Yes	No	Attribute
+state_of_health	State of Health (SoH) percentage	Yes	No	Attribute
+charge_cycles	Cumulative charge/discharge cycle count	Yes	No	Attribute
+8. MAINTENANCE_ALERTS
+Tracks operational and battery warnings requiring operator or technician attention.
+
+Column Name	Meaning	Required	Unique	Key / Reference
+alert_id	Unique identifier for a maintenance or billing alert	Yes	Yes	Primary Key
+bank_id	Related battery bank, if the alert stems from battery telemetry	No	No	Foreign Key → BATTERY_BANKS.bank_id
+meter_id	Related smart meter, if the alert stems from meter status or credit	No	No	Foreign Key → METERS.meter_id
+alert_category	Type of alert (e.g., low credit, disconnected meter, high temp, low SoH)	Yes	No	Attribute
+severity_level	Urgency level of the alert (e.g., low, medium, high, critical)	Yes	No	Attribute
+alert_status	Workflow state of the alert (e.g., open, acknowledged, resolved)	Yes	No	Attribute
+triggered_at	Timestamp when the alert condition was detected	Yes	No	Attribute
+resolved_at	Timestamp when the alert was resolved	No	No	Attribute
+9. Summary of Logical Relationships (Crow's-Foot)
+CUSTOMERS (1) to PREPAID_ACCOUNTS (0..N): A customer can hold one or more prepaid accounts.
+
+CUSTOMERS (1) to METERS (0..N): A customer can have one or more assigned meters.
+
+BATTERY_BANKS (1) to METERS (0..N): A battery bank can serve multiple smart meters.
+
+PREPAID_ACCOUNTS (1) to ENERGY_TRANSACTIONS (0..N): A prepaid account accumulates top-up and billing transactions.
+
+METERS (1) to CONSUMPTION_LOGS (0..N): A meter generates periodic energy consumption logs.
+
+METERS (1) to ENERGY_TRANSACTIONS (0..N): Meter activity/top-ups link to transaction records.
+
+BATTERY_BANKS (1) to BATTERY_HEALTH_LOGS (0..N): A battery bank records periodic health telemetry snapshots.
+
+BATTERY_BANKS (0..1) to MAINTENANCE_ALERTS (0..N) and METERS (0..1) to MAINTENANCE_ALERTS (0..N): Alerts may reference a battery bank, a meter, or both depending on the trigger.
+
+Save this content to docs/design/data_dictionary.md in your repository so it aligns with docs/design/normalization.md and docs/design/erd.png.
