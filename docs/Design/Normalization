@@ -1,1 +1,340 @@
 
+Step-by-Step Normalization (UNF to 3NF) & Field Mapping
+
+Project: Off-Grid Solar Micro-Grid Energy Billing & Battery Health Monitor
+
+Student: Uhoranayezu Tertullien (ID: 29776)
+
+1. Entities Identified (5+ Relational Tables)
+
+CUSTOMERS — Anonymised micro-grid customer accounts and service zones.
+
+METERS — Smart meters assigned to customers and linked to a micro-grid battery bank.
+
+BATTERY_BANKS — Micro-grid battery bank units and rated specifications.
+
+CONSUMPTION_LOGS — Meter energy usage readings ($kWh$) and billing/tariff records per reading interval.
+
+BATTERY_HEALTH_LOGS — Periodic battery telemetry readings (voltage, current, temperature, State of Charge, State of Health).
+
+MAINTENANCE_ALERTS — Operational/maintenance alerts triggered by low credit/disconnection or battery health thresholds.
+
+(Note: If modeling multi-operator or multi-technician assignments across battery banks, a junction table such as MAINTENANCE_ASSIGNMENTS resolves the many-to-many relationship between maintenance alerts/tasks and technicians.)
+
+2. Step-by-Step Normalization (UNF -> 1NF -> 2NF -> 3NF)
+
+Unnormalized Form (UNF)
+
+Wide/nested raw records where each row bundles customer info, meter info, multiple hourly consumption/billing entries, and battery telemetry/alert readings:
+
+raw_record_id
+
+customer_ref
+
+zone_name
+
+meter_code
+
+battery_bank_code
+
+hourly_readings_list
+
+battery_telemetry_list
+
+R-101
+
+C-01
+
+Kigali
+
+M-10
+
+BB-1
+
+[08:00: 1.2kWh @ $0.20, 09:00: 0.8kWh @ $0.20]
+
+[08:00: 48.4V, 31C, SoC 82%; 09:00: 48.1V, 33C, SoC 79%]
+
+R-102
+
+C-02
+
+kigali 
+
+M-11
+
+BB-1
+
+[08:00: 2.5kWh @ $0.20, 09:00: 0.0kWh @ $0.20]
+
+[08:00: 48.4V, 31C, SoC 82%; 09:00: 48.1V, 33C, SoC 79%]
+
+R-103
+
+C-03
+
+KGL
+
+M-12
+
+BB-2
+
+[08:00: 1.5kWh @ $0.22]
+
+[08:00: 46.8V, 46C, SoC 18%, ALERT: HighTemp]
+
+Dependency removed (UNF -> 1NF): Removed repeating groups (hourly_readings_list and battery_telemetry_list) and multi-valued/embedded units so every column holds a single atomic value.
+
+First Normal Form (1NF)
+
+Each row represents one atomic reading event for a meter and battery state with a composite key (meter_code, reading_time):
+
+meter_code
+
+reading_time
+
+customer_ref
+
+zone_name
+
+battery_bank_code
+
+kwh_used
+
+tariff_rate
+
+credit_balance
+
+battery_voltage
+
+battery_temp_c
+
+soc_pct
+
+alert_note
+
+M-10
+
+2026-03-04 08:00
+
+C-01
+
+Kigali
+
+BB-1
+
+1.2
+
+0.20
+
+14.50
+
+48.4
+
+31.0
+
+82
+
+None
+
+M-10
+
+2026-03-04 09:00
+
+C-01
+
+Kigali
+
+BB-1
+
+0.8
+
+0.20
+
+14.34
+
+48.1
+
+33.0
+
+79
+
+None
+
+M-11
+
+2026-03-04 08:00
+
+C-02
+
+Kigali
+
+BB-1
+
+2.5
+
+0.20
+
+0.50
+
+48.4
+
+31.0
+
+82
+
+Low credit
+
+M-12
+
+2026-03-04 08:00
+
+C-03
+
+Kigali
+
+BB-2
+
+1.5
+
+0.22
+
+8.00
+
+46.8
+
+46.0
+
+18
+
+HighTemp
+
+Dependency removed (1NF -> 2NF): Removed partial dependencies on parts of the composite key by separating attributes that depend only on customer_ref, only on meter_code, or only on battery_bank_code into their own entities.
+
+Second Normal Form (2NF)
+
+Attributes depending only on a single entity key are separated from time-specific reading attributes:
+
+Meters / Customers slice:
+| meter_code | customer_ref | battery_bank_code | tariff_rate | credit_balance |
+| :--- | :--- | :--- | :--- | :--- |
+| M-10 | C-01 | BB-1 | 0.20 | 14.34 |
+| M-11 | C-02 | BB-1 | 0.20 | 0.50 |
+| M-12 | C-03 | BB-2 | 0.22 | 8.00 |
+
+Consumption logs slice (meter_code, reading_time):
+| meter_code | reading_time | kwh_used |
+| :--- | :--- | :--- |
+| M-10 | 2026-03-04 08:00 | 1.2 |
+| M-10 | 2026-03-04 09:00 | 0.8 |
+| M-11 | 2026-03-04 08:00 | 2.5 |
+
+Dependency removed (2NF -> 3NF): Removed transitive dependencies where non-key attributes depended on another non-key attribute (for example, zone_name belongs to the customer/service area rather than the meter reading, and battery telemetry belongs to the battery_bank_code timeline rather than individual customer meters).
+
+Third Normal Form (3NF)
+
+Every non-key attribute depends solely on the primary key of its own table:
+
+CUSTOMERS: (customer_id [PK], zone_name, account_status)
+
+BATTERY_BANKS: (battery_bank_id [PK], nominal_voltage, rated_capacity_ah, zone_name)
+
+METERS: (meter_id [PK], customer_id [FK], battery_bank_id [FK], meter_status, tariff_rate, credit_balance)
+
+CONSUMPTION_LOGS: (consumption_id [PK], meter_id [FK], reading_timestamp, kwh_consumed)
+
+BATTERY_HEALTH_LOGS: (health_log_id [PK], battery_bank_id [FK], recorded_at, voltage_v, current_a, temp_c, soc_pct, soh_pct)
+
+MAINTENANCE_ALERTS: (alert_id [PK], meter_id [FK, nullable], battery_bank_id [FK, nullable], alert_type, severity, status, created_at)
+
+3. Raw Field Mapping & Phase IV Cleaning Checklist
+
+Raw Field / Column
+
+Target Table.Column (or Action)
+
+Phase IV Cleaning / Type Conversion Needed
+
+customer_code
+
+CUSTOMERS.customer_code
+
+Trim whitespace; standardise casing; map to surrogate customer_id
+
+zone / district
+
+CUSTOMERS.zone_name
+
+Standardise spelling variants ("KGL", "kigali " -> "Kigali") to text
+
+meter_code
+
+METERS.meter_code
+
+Trim/uppercase code; link to customer_id and battery_bank_id
+
+meter_status
+
+METERS.meter_status
+
+Normalise status values (ACTIVE, DISCONNECTED)
+
+tariff_rate_raw
+
+METERS.tariff_rate
+
+Strip currency/unit text ("$/kWh"); convert text to numeric
+
+balance_raw
+
+METERS.credit_balance
+
+Strip currency symbols/commas; convert text to numeric
+
+reading_time_raw
+
+CONSUMPTION_LOGS.reading_timestamp
+
+Parse mixed date formats; convert text to timestamp/date
+
+kwh_raw
+
+CONSUMPTION_LOGS.kwh_consumed
+
+Strip "kWh" suffix; convert text to numeric; validate $\ge 0$
+
+battery_code
+
+BATTERY_BANKS.battery_bank_code
+
+Trim/uppercase code; link to battery_bank_id
+
+voltage_raw
+
+BATTERY_HEALTH_LOGS.voltage_v
+
+Strip "V" suffix; convert text to numeric
+
+current_raw
+
+BATTERY_HEALTH_LOGS.current_a
+
+Strip "A" suffix; convert text to numeric
+
+temp_raw
+
+BATTERY_HEALTH_LOGS.temp_c
+
+Strip "C" / degree symbol; convert text to numeric
+
+soc_raw
+
+BATTERY_HEALTH_LOGS.soc_pct
+
+Strip "%" symbol; convert text to numeric; check range $0\text{--}100$
+
+unused_notes_col
+
+Dropped
+
+Free-text unstructured note; replaced by structured MAINTENANCE_ALERTS rows
